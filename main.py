@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from pydantic import BaseModel
 import asyncio
 import json
@@ -109,7 +110,7 @@ async def read_root(request: Request, db: Session = Depends(get_db)):
     if not user:
         return RedirectResponse(url="/login")
     
-    images = db.query(models.Image).filter(models.Image.data.isnot(None)).order_by(models.Image.upload_time.desc()).all()
+    images = db.query(models.Image).filter(func.length(models.Image.data) > 0).order_by(models.Image.upload_time.desc()).all()
     
     # Enrich with uploader name
     for img in images:
@@ -282,7 +283,7 @@ async def get_tree_status(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Unauthorized")
     
     # Calculate EXP
-    images_count = db.query(models.Image).filter(models.Image.data.isnot(None)).count()
+    images_count = db.query(models.Image).filter(func.length(models.Image.data) > 0).count()
     notes_count = db.query(models.Note).count()
     buckets_count = db.query(models.BucketItem).filter(models.BucketItem.is_completed == 1).count()
     capsules_count = db.query(models.TimeCapsule).count()
