@@ -16,7 +16,7 @@ class Image(Base):
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), index=True, nullable=False)                  # tên file ảnh
     content_type = Column(String(100), default="image/jpeg", nullable=False)    # MIME type
-    data = Column(LargeBinary, nullable=True)                                   # binary data (ảnh nhỏ OK)
+    data = Column(LargeBinary(length=4294967295), nullable=True)                # binary data (hỗ trợ LONGBLOB cho ảnh lớn)
     uploader_id = Column(Integer, ForeignKey("users.id"), nullable=False)       # liên kết với user
     upload_time = Column(DateTime, default=datetime.datetime.utcnow)
 
