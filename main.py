@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 from pydantic import BaseModel
 import asyncio
 import json
@@ -103,6 +103,13 @@ def create_initial_users():
         db.add(u1)
         db.add(u2)
         db.commit()
+        
+    # Auto-upgrade column to LONGBLOB for existing databases like Railway
+    try:
+        db.execute(text("ALTER TABLE images MODIFY COLUMN data LONGBLOB"))
+        db.commit()
+    except Exception as e:
+        print("Schema migration info:", e)
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request, db: Session = Depends(get_db)):
