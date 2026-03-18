@@ -26,11 +26,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('uploadForm');
         const progress = document.getElementById('upload-progress');
 
-        form.addEventListener('submit', () => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault(); // Ngăn trình duyệt tự động tải lại hoặc chuyển trang
+            
             if (fileInput.files.length > 0 || cameraInput.files.length > 0) {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tải lên...';
-                if (progress) progress.style.display = 'block';
+                if (progress) {
+                    progress.style.display = 'block';
+                    progress.textContent = 'Đang tải lên...';
+                }
+                
+                const formData = new FormData(form);
+                
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                }).then(() => {
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> Đã tải lên!';
+                    if (progress) progress.style.display = 'none';
+                    form.reset();
+                    fileLabelText.textContent = "Từ thư viện";
+                    cameraLabelText.textContent = "Chụp ảnh mới";
+                }).catch(err => {
+                    submitBtn.innerHTML = 'Thử lại';
+                    submitBtn.disabled = false;
+                    if (progress) progress.textContent = 'Lỗi kết nối tải ảnh!';
+                });
             }
         });
     }
