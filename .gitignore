@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+env/
+
+# Environment
+.env
+
+# Database (không upload SQLite lên GitHub)
+*.db
+*.sqlite3
+
+# Upload folder (ảnh lưu trong DB rồi)
+uploads/
+
+# Temp files
+*.log
+setup_db.py
+test_qwen.py
+find_qwen.py
+debug_qwen.txt

@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+websockets
+python-multipart
+jinja2
+sqladmin
+python-dotenv
+gunicorn
+pymysql
+cryptography

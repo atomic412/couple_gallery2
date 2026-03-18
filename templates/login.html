@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Private Space</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="login-body">
+    <div class="login-wrapper">
+        <div class="glass-panel login-panel">
+            <h1 class="romantic-title">Our Private Space 🤍</h1>
+            <p class="subtitle">Đăng nhập để vào thế giới của hai đứa mình nha</p>
+            <form action="/login" method="post" class="login-form">
+                {% if request.query_params.get("error") %}
+                <div class="error-msg">Sai tên đăng nhập hoặc mật khẩu rồi nè!</div>
+                {% endif %}
+                <div class="input-group">
+                    <input type="text" name="username" placeholder="Bạn là ai (boy hoặc girl)?" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" name="password" placeholder="Mật khẩu (mặc định: 123456)" required>
+                </div>
+                <button type="submit" class="btn-primary">Vào thôi 🥰</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

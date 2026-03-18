@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Album 🤍</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <nav class="navbar glass-nav">
+        <div class="nav-brand">Our Album 🤍</div>
+        <div class="nav-user">
+            <span>Chào, <strong style="color: var(--accent-color)">{{ user.display_name }}</strong>!</span>
+            <a href="/map" class="btn-primary" style="padding: 6px 15px; border-radius: 20px; text-decoration: none; font-size: 0.9rem; margin-right: 10px;"><i class="fas fa-map-marked-alt"></i> Bản Đồ</a>
+            <a href="/logout" class="btn-logout" title="Đăng xuất"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <main class="gallery-container">
+
+        <!-- V5: TOP ROW (Counter + Tree) -->
+        <div class="dashboard-row" style="margin-bottom: 2rem;">
+            <!-- V2: LOVE COUNTER -->
+            <section class="love-counter glass-panel fade-in" style="flex: 1; margin: 0 !important;">
+                <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem;"><i class="fas fa-heart" style="color:#ff6b81;"></i> Chuyện tình chúng mình <i class="fas fa-heart" style="color:#ff6b81;"></i></h2>
+                <div class="counter-box">
+                    <span id="days-count" class="big-number">0</span>
+                    <span class="days-text">ngày bên nhau</span>
+                </div>
+                <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">Kể từ 08/03/2026</p>
+            </section>
+
+            <!-- V5: LOVE TREE -->
+            <section class="love-tree glass-panel fade-in" style="flex: 1; margin: 0 !important; display: flex; flex-direction: column; align-items: center; justify-content: center; animation-delay: 0.1s;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 5px; color:#2ed573;">Cây Tình Yêu (Lv.<span id="treeLevel">1</span>) 🌱</h2>
+                <div class="tree-visual" id="treeVisual" style="font-size: 4rem; line-height: 1; margin: 10px 0; text-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                    🌱
+                </div>
+                <div style="width: 80%; background: rgba(255,255,255,0.5); border-radius: 15px; height: 16px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid rgba(46, 213, 115, 0.3);">
+                    <div id="treeProgress" style="height: 100%; width: 0%; background: linear-gradient(90deg, #2ed573, #7bed9f); transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                </div>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 8px;"><span id="treeExp">0</span> / <span id="treeNextExp">50</span> EXP (Up ảnh để thêm EXP!)</p>
+            </section>
+        </div>
+
+        <!-- Sinh Nhat Widget -->
+        <div id="birthday-widget" class="glass-panel fade-in" style="margin: 0 auto 2rem auto; text-align: center; max-width: 600px; display: none; background: rgba(255,204,204,0.3); border-color: #ffcccc;">
+            <h3 style="color:#ff4757; margin-bottom: 5px;">🎉 Sự kiện sắp tới! 🎂</h3>
+            <p id="birthday-text" style="font-weight: 500; font-size: 1.1rem; color:#2f3542;"></p>
+        </div>
+
+        <!-- Spotify Player -->
+        <section class="spotify-section glass-panel fade-in" style="animation-delay: 0.1s; max-width: 800px; margin: 0 auto 2rem auto; padding: 1rem;">
+            <iframe data-testid="embed-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/playlist/4OQkamstdNxJhuCrejVrR2?utm_source=generator&theme=0" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+        </section>
+
+        <div class="dashboard-row">
+            <!-- V2: NOTES & REMINDERS -->
+            <section class="notes-section glass-panel fade-in" style="animation-delay: 0.2s;">
+                <h2 style="font-size: 1.8rem;">Bảng tin & Lời nhắc 📝</h2>
+                <form id="noteForm" class="note-form">
+                    <textarea id="noteContent" placeholder="Viết vài dòng yêu thương hoặc nhắc nhở nha..." required rows="2"></textarea>
+                    <div class="note-form-footer">
+                        <button type="submit" class="btn-primary" id="noteSubmitBtn" style="width: auto; padding: 10px 20px;">Gửi yêu thương</button>
+                    </div>
+                </form>
+                <div class="notes-grid" id="notesGrid">
+                    <!-- Notes injected via Javascript -->
+                </div>
+            </section>
+
+            <!-- Upload Section -->
+            <section class="upload-section glass-panel fade-in" style="animation-delay: 0.4s;">
+                <h2>Lưu giữ khoảnh khắc 📸</h2>
+                <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form" id="uploadForm">
+                    <div class="file-buttons-container" style="display: flex; gap: 15px; width: 100%; justify-content: center;">
+                        <div class="file-upload-wrapper" style="flex: 1;">
+                            <input type="file" name="file" id="file" accept="image/*" class="file-input">
+                            <label for="file" class="file-label" id="fileLabel" style="padding: 1.5rem 1rem;">
+                                <i class="fas fa-image upload-icon" style="font-size: 2rem;"></i>
+                                <span id="file-chosen">Từ thư viện</span>
+                            </label>
+                        </div>
+                        <div class="file-upload-wrapper" style="flex: 1;">
+                            <input type="file" name="file" id="camera" accept="image/*" capture="environment" class="file-input">
+                            <label for="camera" class="file-label" id="cameraLabel" style="padding: 1.5rem 1rem;">
+                                <i class="fas fa-camera upload-icon" style="font-size: 2rem;"></i>
+                                <span id="camera-chosen">Chụp ảnh mới</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" id="uploadBtn" style="margin-top: 15px;" disabled>Tải lên liền ✨</button>
+                </form>
+                <div id="upload-progress" style="display:none; margin-top: 10px; color: var(--text-color);">Đang tải lên...</div>
+            </section>
+        </div>
+
+        <!-- New Dashboard Row for V5 Features -->
+        <div class="dashboard-row">
+            <!-- V5: BUCKET LIST -->
+            <section class="bucket-section glass-panel fade-in" style="flex: 1;">
+                <h2 style="font-size: 1.8rem;">100 Điều Muốn Làm Cùng Nhau 🎯</h2>
+                <form id="bucketForm" class="note-form" style="margin-bottom: 1rem;">
+                    <input type="text" id="bucketTitle" placeholder="Thêm điều hai bạn muốn làm cùng nhau..." required style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,107,129,0.3); outline: none;">
+                    <button type="submit" class="btn-primary" id="bucketSubmitBtn" style="margin-top: 10px; width: 100%;">Thêm mục tiêu mới</button>
+                </form>
+                <div class="bucket-list" id="bucketList" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
+                    <!-- Items injected via JS -->
+                </div>
+            </section>
+
+            <!-- V5: TIME CAPSULE -->
+            <section class="capsule-section glass-panel fade-in" style="flex: 1; animation-delay: 0.4s;">
+                <h2 style="font-size: 1.8rem;">Thư Gửi Tương Lai ⏳</h2>
+                <form id="capsuleForm" class="note-form" style="margin-bottom: 1rem;">
+                    <textarea id="capsuleContent" placeholder="Viết những tâm tư giấu kín cho tương lai..." required rows="3" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,107,129,0.3); outline: none; background: rgba(255,255,255,0.6); font-family: Inter; resize: vertical;"></textarea>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <input type="date" id="capsuleDate" required style="flex:1; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,107,129,0.3); outline: none; background: rgba(255,255,255,0.6);">
+                        <button type="submit" class="btn-primary" id="capsuleSubmitBtn" style="flex: 1;">Khóa vào hòm thư</button>
+                    </div>
+                </form>
+                <div class="capsule-list" id="capsuleList" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
+                    <!-- Items injected via JS -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Gallery Grid -->
+        <section class="photo-grid">
+            {% for img in images %}
+            <div class="photo-card fade-in">
+                <div class="img-wrapper">
+                    <img src="/image/{{ img.id }}" alt="Kỷ niệm" loading="lazy">
+                </div>
+                <div class="photo-overlay">
+                    <div>
+                        <span class="uploader-name"><i class="fas fa-heart" style="color:#ff6b81; font-size:12px; margin-right:4px;"></i> {{ img.uploader_name }}</span>
+                        <br>
+                        <span class="upload-time">{{ img.upload_time.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                    <!-- V2: DOWNLOAD BUTTON -->
+                    <a href="/image/{{ img.id }}" download="{{ img.filename }}" class="btn-download" title="Tải ảnh chất lượng cao">
+                        <i class="fas fa-arrow-down"></i>
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state glass-panel fade-in" style="grid-column: 1 / -1;">
+                <i class="fas fa-images empty-icon"></i>
+                <p>Chưa có bức ảnh nào cả. Hãy lưu giữ ký ức đầu tiên đi nào! 🥺</p>
+            </div>
+            {% endfor %}
+        </section>
+    </main>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/imagesloaded@4.1.4/imagesloaded.pkgd.min.js"></script>
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

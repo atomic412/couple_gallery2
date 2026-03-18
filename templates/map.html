@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bản Đồ Tình Yêu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body, html { height: 100%; margin: 0; display: flex; flex-direction: column; overflow: hidden; }
+        #map { flex: 1; width: 100%; z-index: 1; }
+        .map-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255,255,255,0.9);
+            padding: 15px 25px;
+            border-radius: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .add-pin-btn {
+            background: var(--primary-btn);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 107, 129, 0.4);
+        }
+        
+        /* Modal Info */
+        .modal {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center;
+        }
+        .modal input, .modal textarea {
+            width: 100%; padding: 12px; margin-top: 10px; border-radius: 10px; border: 1px solid #ddd; outline:none;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar glass-nav" style="flex-shrink: 0;">
+        <div class="nav-brand"><a href="/" style="text-decoration: none; color: inherit;">Our Album 🤍</a></div>
+        <div class="nav-user">
+            <a href="/" class="btn-primary" style="padding: 6px 15px; border-radius: 20px; text-decoration: none; font-size: 0.9rem; margin-right: 10px;"><i class="fas fa-home"></i> Về Nhà</a>
+        </div>
+    </nav>
+
+    <div id="map"></div>
+
+    <div class="map-controls">
+        <span style="font-weight: 500; color: #444;"><i class="fas fa-map-marker-alt" style="color: #ff4757;"></i> Chạm vào Bản đồ để chọn điểm</span>
+        <button class="add-pin-btn" id="addPinBtn" disabled>Ghim Kỷ Niệm Mới</button>
+    </div>
+
+    <!-- Add Marker Modal -->
+    <div id="pinModal" class="modal">
+        <div class="modal-content">
+            <h2 style="font-size: 1.5rem; margin-bottom: 5px;">📍 Ghim Kỷ Niệm</h2>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Chúng ta đã có gì ở đây thế?</p>
+            <input type="text" id="pinTitle" placeholder="Tiêu đề (VD: Chuyến đi Đà Lạt đầu tiên)" required>
+            <textarea id="pinDesc" rows="3" placeholder="Mô tả cảm xúc, câu chuyện..." required></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-primary" id="savePinBtn" style="flex: 2;">Lưu Đinh Ghim</button>
+                <button class="btn-primary" id="cancelPinBtn" style="flex: 1; background: #bbb; box-shadow: none;">Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        // Init Map
+        const map = L.map('map').setView([16.047079, 108.206230], 6); // Center VN
+
+        // Add TileLayer (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Custom Love Icon
+        const loveIcon = L.divIcon({
+            html: '<div style="font-size: 2rem; color: #ff4757; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); transform: translate(-50%, -100%);">📍❤️</div>',
+            className: 'custom-div-icon',
+            iconSize: [30, 42],
+            iconAnchor: [15, 42]
+        });
+
+        // Current Selection marker
+        let selectionMarker = null;
+        const addPinBtn = document.getElementById('addPinBtn');
+
+        map.on('click', function(e) {
+            if (selectionMarker) {
+                map.removeLayer(selectionMarker);
+            }
+            selectionMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+            addPinBtn.disabled = false;
+            addPinBtn.innerText = "Ghim vào " + e.latlng.lat.toFixed(4) + ", " + e.latlng.lng.toFixed(4);
+        });
+
+        // Fetch existing markers
+        function loadMarkers() {
+            fetch('/markers')
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(m => {
+                        const marker = L.marker([m.lat, m.lng], {icon: loveIcon}).addTo(map);
+                        marker.bindPopup(`<b>${m.title}</b><br>${m.description}`);
+                    });
+                });
+        }
+        loadMarkers();
+
+        // Modal Logic
+        const modal = document.getElementById('pinModal');
+        const saveBtn = document.getElementById('savePinBtn');
+        const cancelBtn = document.getElementById('cancelPinBtn');
+
+        addPinBtn.addEventListener('click', () => {
+            modal.style.display = "flex";
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            modal.style.display = "none";
+        });
+
+        saveBtn.addEventListener('click', () => {
+            const title = document.getElementById('pinTitle').value;
+            const desc = document.getElementById('pinDesc').value;
+            if (!title) return alert("Vui lòng nhập tiêu đề!");
+
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Đang lưu...";
+
+            fetch('/markers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lat: selectionMarker.getLatLng().lat.toString(),
+                    lng: selectionMarker.getLatLng().lng.toString(),
+                    title: title,
+                    description: desc
+                })
+            }).then(() => {
+                modal.style.display = "none";
+                document.getElementById('pinTitle').value = '';
+                document.getElementById('pinDesc').value = '';
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Lưu Đinh Ghim";
+                map.removeLayer(selectionMarker);
+                selectionMarker = null;
+                addPinBtn.disabled = true;
+                addPinBtn.innerText = "Ghim Kỷ Niệm Mới";
+                
+                // Reload markers visually
+                loadMarkers();
+            });
+        });
+    </script>
+</body>
+</html>
