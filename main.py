@@ -13,6 +13,9 @@ import json
 
 class NoteCreate(BaseModel):
     content: str
+    
+class CloudImageCreate(BaseModel):
+    url: str
 
 class BucketCreate(BaseModel):
     title: str
@@ -124,7 +127,13 @@ async def read_root(request: Request, db: Session = Depends(get_db)):
         uploader = db.query(models.User).filter(models.User.id == img.uploader_id).first()
         img.uploader_name = uploader.display_name if uploader else "Unknown"
 
-    return templates.TemplateResponse("index.html", {"request": request, "user": user, "images": images})
+    imgbb_key = os.getenv("IMGBB_API_KEY", "42526ce53481da44c93d8e94f1eded54")
+    return templates.TemplateResponse("index.html", {
+        "request": request, 
+        "user": user, 
+        "images": images,
+        "imgbb_key": imgbb_key
+    })
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request):
@@ -172,6 +181,25 @@ async def upload_image(request: Request, file: UploadFile = File(...), db: Sessi
     
     await manager.broadcast(f"photo|{user.display_name} vừa tải lên một bức ảnh mới nha!")
     return RedirectResponse(url="/", status_code=303)
+
+@app.post("/upload-cloud")
+async def upload_cloud_image(payload: CloudImageCreate, request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    new_image = models.Image(
+        filename=payload.url,
+        content_type="image/jpeg",
+        data=b"cloud",  # Marker content to pass the length>0 filter
+        uploader_id=user.id
+    )
+    db.add(new_image)
+    db.commit()
+    db.refresh(new_image)
+    
+    await manager.broadcast(f"photo|{user.display_name} vừa tải lên một bức ảnh mới trên Cloud nha!")
+    return {"status": "ok", "url": payload.url}
 
 @app.get("/image/{image_id}")
 async def serve_image(image_id: int, request: Request, db: Session = Depends(get_db)):

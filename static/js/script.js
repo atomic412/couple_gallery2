@@ -37,12 +37,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     progress.textContent = 'Đang tải lên...';
                 }
                 
-                const formData = new FormData(form);
+                const file = fileInput.files[0] || cameraInput.files[0];
+                const cloudData = new FormData();
+                cloudData.append('image', file);
                 
-                fetch('/upload', {
+                // 1. Upload ảnh trực tiếp lên Cloud (ImgBB)
+                fetch(`https://api.imgbb.com/1/upload?key=${window.IMGBB_API_KEY}`, {
                     method: 'POST',
-                    body: formData
-                }).then(() => {
+                    body: cloudData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const cloudUrl = data.data.url;
+                        // 2. Gửi link ảnh về cho Server Python lưu mỏng vào Database
+                        return fetch('/upload-cloud', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: cloudUrl })
+                        });
+                    } else {
+                        throw new Error('Lỗi từ máy chủ Cloud');
+                    }
+                })
+                .then(() => {
                     submitBtn.innerHTML = '<i class="fas fa-check"></i> Đã tải lên!';
                     if (progress) progress.style.display = 'none';
                     form.reset();
@@ -51,7 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }).catch(err => {
                     submitBtn.innerHTML = 'Thử lại';
                     submitBtn.disabled = false;
-                    if (progress) progress.textContent = 'Lỗi kết nối tải ảnh!';
+                    if (progress) progress.textContent = 'Lỗi kết nối tải ảnh lên máy chủ mây!';
+                    console.error("Lỗi Upload Cloud:", err);
                 });
             }
         });

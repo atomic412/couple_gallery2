@@ -135,7 +135,11 @@
             {% for img in images %}
             <div class="photo-card fade-in">
                 <div class="img-wrapper">
-                    <img src="/image/{{ img.id }}" alt="Kỷ niệm" loading="lazy">
+                    {% if img.filename.startswith('http') %}
+                        <img src="{{ img.filename }}" alt="Kỷ niệm" loading="lazy">
+                    {% else %}
+                        <img src="/image/{{ img.id }}" alt="Kỷ niệm" loading="lazy">
+                    {% endif %}
                 </div>
                 <div class="photo-overlay">
                     <div>
@@ -144,9 +148,15 @@
                         <span class="upload-time">{{ img.upload_time.strftime('%d/%m/%Y') }}</span>
                     </div>
                     <!-- V2: DOWNLOAD BUTTON -->
+                    {% if img.filename.startswith('http') %}
+                    <a href="{{ img.filename }}" download="ky-niem.jpg" class="btn-download" title="Tải ảnh chất lượng cao" target="_blank">
+                        <i class="fas fa-arrow-down"></i>
+                    </a>
+                    {% else %}
                     <a href="/image/{{ img.id }}" download="{{ img.filename }}" class="btn-download" title="Tải ảnh chất lượng cao">
                         <i class="fas fa-arrow-down"></i>
                     </a>
+                    {% endif %}
                 </div>
             </div>
             {% else %}
@@ -159,6 +169,10 @@
     </main>
 
 
+    <script>
+        // Pass ImgBB API key to frontend script
+        window.IMGBB_API_KEY = "{{ imgbb_key }}";
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/imagesloaded@4.1.4/imagesloaded.pkgd.min.js"></script>
     <script src="/static/js/script.js"></script>
